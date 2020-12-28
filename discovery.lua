@@ -1,10 +1,12 @@
 local function neo4j_discovery(applet)
 	-- what's the client trying to access???
 	local reqhost = applet.headers["host"][0]
-	if not reqhost then 
+	if not reqhost then
 		core.Alert("request doesn't have host header!?")
 		return
 	end
+        -- because the js driver will provide a default port if we don't!
+        reqhost = reqhost .. ":443"
 	core.Info(string.format("translating discovery request with reqhost: %s", reqhost))
 
 	-- look for a particular backend named "neo4j-http"
@@ -13,7 +15,7 @@ local function neo4j_discovery(applet)
 		core.Alert("cannot find backend named 'neo4j-http'")
 		return
 	end
-	
+
 	-- get the first server in our backend
 	local server = nil
 	for k,v in pairs(httpbe.servers) do
@@ -25,7 +27,7 @@ local function neo4j_discovery(applet)
 		core.Alert(string.format("can't get a host value for server %s", server))
 		return
 	end
-	
+
 	core.Info(string.format("using backend server %s", host))
 	local hdrs = {
 		[1] = string.format('host: %s', host),
@@ -59,16 +61,16 @@ local function neo4j_discovery(applet)
 				local line, _ = socket:receive('*l')
 				if not line then break end
 				if line == '' then break end
-				
+
 				local start = string.find(line, "//")
 				if start ~= nil then
 					local finish = string.find(line, '[/"]', start + 2)
 					content = content .. string.sub(line, 1, start+1) .. reqhost .. string.sub(line, finish) .. "\n"
-				else 
+				else
 					content = content .. line .. "\n"
 				end
-			end 
-			if content then 
+			end
+			if content then
 				applet:set_status(200)
 				applet:add_header('content-length', string.len(content))
 				applet:add_header('content-type', 'application/json')
