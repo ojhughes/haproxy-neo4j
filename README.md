@@ -122,7 +122,32 @@ So you want to try this out? Deploy the following things to GKE or
 your k8s of choice. Replace anything in braces like `<<>>` with your
 own details.
 
+### TLS Secret
+We need to first install the x509 cert and key as a kubernetes TLS
+secret. If you have a cert and key you'd like to use instead, change
+this as you see fit. You'll reference it in the next section for the
+Deployment config, btw.
+
+Easiest way is from the command line after having run `make` or `make
+certs` (setting `TLS_CN` appropriately)
+```
+$ kubectl create secret tls haproxy-neo4j-tls-secret \
+    --cert=cert.pem \
+    --key=cert.pem.key
+```
+
+> You might notice my funny naming convention. It's from HAProxy's
+> requirement of either having the key and cert appended together into
+> 1 PEM file OR having the key use the same name as the cert, just
+> with `.key` as a suffix. Here k8s is going to muck with it, but for
+> local testing, I keep the files like that. We'll revisit this point
+> next section.
+
 ### Deployment
+The following Deployment defines the HAProxy deployment as a stateless
+set of pods. Feel free to change the number of replicas, etc. as you
+see fit.
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -165,6 +190,12 @@ spec:
             - key: tls.key
               path: cert.pem.key
 ```
+
+> Above, you should notice the mapping of the TLS secret as a
+> volume. Note the renaming of the keys `tls.crt` nad `tls.key` to
+> `cert.pem` and `cert.pem.key` respectively. This does what I was
+> talking about before...it makes the secret available in an
+> HAProxy-friendly format.
 
 ### A Load Balancer
 This only works with GKE. If using something else, or substituting a
