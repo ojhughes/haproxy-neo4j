@@ -1,12 +1,12 @@
-VERSION = 0.1.2
+VERSION = 0.2.0
 TLS_CN != if [ X"$(TLS_CN)" = X"" ]; then \
 		echo "localhost"; \
 	else \
 		echo "${TLS_CN}"; \
 	fi
 
-KEYGEN = openssl req -x509 -newkey rsa:4096 -keyout cert.pem.key \
-		-out cert.pem -days 30 -nodes -subj "/CN=${TLS_CN}"
+KEYGEN = openssl req -x509 -newkey rsa:2048 -sha256 -keyout cert.pem.key \
+		-out cert.pem -days 30 -nodes -config ssl.conf
 
 
 .PHONY: docker k8s-deploy clean
@@ -15,7 +15,23 @@ KEYGEN = openssl req -x509 -newkey rsa:4096 -keyout cert.pem.key \
 docker: certs
 	docker build -t haproxy-neo4j:$(VERSION) .
 
-certs: cert.pem cert.pem.key
+ssl.conf:
+	printf \
+"[ req ] \n\
+	prompt = no \n\
+	distinguished_name = req_distinguished_name \n\
+	x509_extensions = san_self_signed \n\
+[ req_distinguished_name ] \n\
+	CN=$(TLS_CN) \n\
+[ san_self_signed ] \n\
+	subjectAltName = DNS:$(TLS_CN) \n\
+	subjectKeyIdentifier = hash \n\
+	authorityKeyIdentifier = keyid:always,issuer \n\
+	basicConstraints = CA:false \n\
+	keyUsage = nonRepudiation, digitalSignature, keyEncipherment, dataEncipherment, keyCertSign, cRLSign \n\
+	extendedKeyUsage = serverAuth, clientAuth, timeStamping\n" > ssl.conf
+
+certs: ssl.conf cert.pem cert.pem.key
 cert.pem:
 	$(KEYGEN)
 cert.pem.key:
@@ -31,4 +47,4 @@ k8s-deploy: k8s-tls-secret
 
 clean:
 	@echo make clean
-	rm -f cert.pem cert.pem.key
+	rm -f ssl.conf cert.pem cert.pem.key
