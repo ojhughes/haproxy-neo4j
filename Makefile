@@ -1,4 +1,4 @@
-VERSION = 0.2.0
+VERSION = 0.2.1
 TLS_CN != if [ X"$(TLS_CN)" = X"" ]; then \
 		echo "localhost"; \
 	else \
