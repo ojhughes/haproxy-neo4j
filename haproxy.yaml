@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: haproxy-neo4j-deployment
+  labels:
+    app: haproxy-neo4j
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: haproxy-neo4j
+  template:
+    metadata:
+      labels:
+        app: haproxy-neo4j
+    spec:
+      containers:
+        - name: haproxy-neo4j
+          image: eu.gcr.io/launcher-development-191917/haproxy-neo4j:0.1.2
+          env:
+            - name: NEO4J_HTTP
+              value: "ha-proxy-neo4j:7474"
+            - name: NEO4J_BOLT
+              value: "ha-proxy-neo4j:7687"
+          ports:
+            - containerPort: 8080

@@ -12,8 +12,9 @@ KEYGEN = openssl req -x509 -newkey rsa:2048 -sha256 -keyout cert.pem.key \
 .PHONY: docker k8s-deploy clean
 .NOTPARALLEL: certs
 
-docker: certs
-	docker build -t haproxy-neo4j:$(VERSION) .
+docker:
+	docker build -t eu.gcr.io/launcher-development-191917/haproxy-neo4j:$(VERSION) .
+	docker push eu.gcr.io/launcher-development-191917/haproxy-neo4j:$(VERSION)
 
 ssl.conf:
 	printf \
