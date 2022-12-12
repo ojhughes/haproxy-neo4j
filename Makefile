@@ -13,8 +13,8 @@ KEYGEN = openssl req -x509 -newkey rsa:2048 -sha256 -keyout cert.pem.key \
 .NOTPARALLEL: certs
 
 docker:
-	docker build -t eu.gcr.io/launcher-development-191917/haproxy-neo4j:$(VERSION) .
-	docker push eu.gcr.io/launcher-development-191917/haproxy-neo4j:$(VERSION)
+	docker build -t ojhughes/haproxy-neo4j:$(VERSION) .
+	docker push ojhughes/haproxy-neo4j:$(VERSION)
 
 ssl.conf:
 	printf \
